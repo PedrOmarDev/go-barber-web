@@ -4,7 +4,8 @@ import { FormHandles } from '@unform/core'
 import { Form } from '@unform/web'
 import * as Yup from 'yup'
 
-import AuthContext from '../../context/AuthContext'
+import { useAuth } from '../../hooks/auth'
+import { useToast } from '../../hooks/toast'
 import getValidationErrors from '../../utils/getValidationErrors'
 
 import logoImg from '../../assets/logo.svg'
@@ -14,7 +15,7 @@ import { Background, Container, Content } from './styles'
 import Input from '../../components/Input'
 import Button from '../../components/Button'
 
-interface DataForm {
+interface SignInFormData {
 	email: string
 	password: string
 }
@@ -22,26 +23,40 @@ interface DataForm {
 const SignIn: React.FC = () => {
 	const formRef = useRef<FormHandles | null>(null)
 
-	const handleSubmit = useCallback(async (data: DataForm): Promise<void> => {
-		try {
-			formRef.current?.setErrors({})
+	const { signIn } = useAuth()
+	const { addToast } = useToast()
 
-			const schema = Yup.object().shape({
-				email: Yup.string()
-					.required('E-mail obrigatório')
-					.email('Digite um e-mail válido'),
-				password: Yup.string().required('Senha obrigatória'),
-			})
+	const handleSubmit = useCallback(
+		async (data: SignInFormData): Promise<void> => {
+			try {
+				formRef.current?.setErrors({})
 
-			await schema.validate(data, {
-				abortEarly: false,
-			})
-		} catch (error) {
-			const errors = getValidationErrors(error)
+				const schema = Yup.object().shape({
+					email: Yup.string()
+						.required('E-mail obrigatório')
+						.email('Digite um e-mail válido'),
+					password: Yup.string().required('Senha obrigatória'),
+				})
 
-			formRef.current?.setErrors(errors)
-		}
-	}, [])
+				await schema.validate(data, {
+					abortEarly: false,
+				})
+
+				const { email, password } = data
+
+				await signIn({ email, password })
+			} catch (err) {
+				if (err instanceof Yup.ValidationError) {
+					const errors = getValidationErrors(err)
+
+					formRef.current?.setErrors(errors)
+				}
+
+				addToast()
+			}
+		},
+		[addToast, signIn],
+	)
 
 	return (
 		<Container>
