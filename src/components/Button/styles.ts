@@ -13,7 +13,12 @@ export const Container = styled.button`
 	margin-top: 16px;
 	transition: background-color 0.2s;
 
-	&:hover {
+	&:hover:enabled {
 		background-color: ${shade(0.2, '#ff9000')};
+	}
+
+	&:disabled {
+		cursor: not-allowed;
+		color: ${shade(0.5, '#ff9000')};
 	}
 `
